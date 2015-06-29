@@ -1,0 +1,6 @@
+<WorkspaceItem ctype="Workspace">
+  <Items>
+    <Item>Tiny-JSON/Tiny-JSON.sln</Item>
+    <Item>tests/tests.sln</Item>
+  </Items>
+</WorkspaceItem>
