@@ -8,29 +8,68 @@ namespace Tiny {
 	public class JsonBuilder {
 
 		StringBuilder builder;
+		bool pretty;
+		int level;
 
 		public JsonBuilder() {
-			builder = new StringBuilder();
+			this.builder = new StringBuilder();
+			this.pretty = false;
+		}
+
+		public JsonBuilder(bool pretty) {
+			this.builder = new StringBuilder();
+			this.pretty = pretty;
+		}
+
+		private void AppendPrettyLineBreak() {
+			builder.Append("\n");
+			for (int i = 0; i < level; i++) {
+				builder.Append("\t");
+			}
+		}
+
+		private bool HasPrettyLineBreak() {
+			return builder.ToString().EndsWith("\t") || builder.ToString().EndsWith("\n");
+		}
+
+		private void RemovePrettyLineBreak() {
+			while (HasPrettyLineBreak()) {
+				builder.Remove(builder.Length - 1, 1);
+			}
 		}
 
 		public void AppendBeginObject() {
+			level++;
 			builder.Append("{");
+			if (pretty) AppendPrettyLineBreak();
 		}
 
 		public void AppendEndObject() {
+			level--;
+			if (pretty) RemovePrettyLineBreak();
+			if (pretty) AppendPrettyLineBreak();
 			builder.Append("}");
+			if (pretty) AppendPrettyLineBreak();
 		}
 
 		public void AppendBeginArray() {
+			level++;
 			builder.Append("[");
+			if (pretty) AppendPrettyLineBreak();
 		}
 		
 		public void AppendEndArray() {
+			level--;
+			if (pretty) RemovePrettyLineBreak();
+			if (pretty) AppendPrettyLineBreak();
 			builder.Append("]");
+			if (pretty) AppendPrettyLineBreak();
 		}
 
 		public void AppendSeperator() {
+			if (pretty) RemovePrettyLineBreak();
 			builder.Append(",");
+			if (pretty) AppendPrettyLineBreak();
 		}
 
 		public void AppendNull() {
@@ -77,7 +116,7 @@ namespace Tiny {
 						break;
 					default:
 						int codepoint = Convert.ToInt32(c);
-						if ((codepoint >= 32) && (codepoint <= 126)) {
+						if (pretty || (codepoint >= 32 && codepoint <= 126)) {
 							builder.Append(c);
 						} else {
 							builder.Append("\\u" + Convert.ToString(codepoint, 16).PadLeft(4, '0'));
@@ -112,7 +151,7 @@ namespace Tiny {
 				foreach (DictionaryEntry entry in dict) {
 					if (first) first = false; else AppendSeperator();
 					AppendString(entry.Key.ToString());
-					builder.Append(":");
+					builder.Append(pretty ? " : " : ":");
 					AppendValue(entry.Value);
 				}
 				AppendEndObject();
@@ -137,7 +176,7 @@ namespace Tiny {
 
 		public void AppendName(string name) {
 			AppendString(name);
-			builder.Append(":");
+			builder.Append(pretty ? " : " : ":");
 		}
 
 		internal static bool IsNumber(object value) {

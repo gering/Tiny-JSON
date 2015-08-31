@@ -12,8 +12,8 @@ namespace Tiny {
 			return JsonMapper.DecodeJsonObject<T>(jsonObj);
 		}
 		
-		public static string Encode(object value) {
-			JsonBuilder builder = new JsonBuilder();
+		public static string Encode(object value, bool pretty = false) {
+			JsonBuilder builder = new JsonBuilder(pretty);
 			JsonMapper.EncodeValue(value, builder);
 			return builder.ToString();
 		}

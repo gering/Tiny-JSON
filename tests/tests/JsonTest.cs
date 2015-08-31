@@ -102,10 +102,10 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeListTest2() {
-			List<string> list = new List<string>(new string[]{"a", "b", null, null, "e"});
+			List<string> list = new List<string>(new string[]{"ä", "b", null, null, "e"});
 			string json = Json.Encode(list);
 			
-			Assert.AreEqual("[\"a\",\"b\",null,null,\"e\"]", json);
+			Assert.AreEqual("[\"\\u00e4\",\"b\",null,null,\"e\"]", json);
 		}
 
 		[Test]
@@ -122,6 +122,23 @@ namespace Tiny {
 			string json = Json.Encode(list);
 			
 			Assert.AreEqual("[true,false]", json);
+		}
+
+		[Test]
+		public static void PrettyEncodeTest1() {
+			Animal a = new Bear(10.5f);
+			a.legs = 4;
+			
+			string json = Json.Encode(a, true);
+			Assert.AreEqual("{\n\t\"weight\" : 10.5,\n\t\"name\" : \"Baloo\",\n\t\"hungry\" : false,\n\t\"legs\" : 4,\n\t\"kind\" : 3\n}\n", json);
+		}
+
+		[Test]
+		public static void PrettyEncodeTest2() {
+			string[] array = {"ä", "\"", "", null};
+			string json = Json.Encode(array, true);
+			
+			Assert.AreEqual("[\n\t\"ä\",\n\t\"\\\"\",\n\t\"\",\n\tnull\n]\n", json);
 		}
 
 		[Test]
