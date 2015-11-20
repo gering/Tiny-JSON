@@ -24,6 +24,7 @@ namespace Tiny {
 
 			// register generic encoder
 			RegisterEncoder<object>((obj, builder) => {
+				Console.WriteLine("using generic encoder");
 				builder.AppendBeginObject();
 				Type type = obj.GetType();
 				bool first = true;
@@ -39,8 +40,22 @@ namespace Tiny {
 				builder.AppendEndObject();
 			});
 
+			// register IDictionary encoder
+			RegisterEncoder<IDictionary>((obj, builder) => {
+				Console.WriteLine("using IDictionary encoder");
+				builder.AppendBeginObject();
+				bool first = true;
+				IDictionary dict = (IDictionary)obj;
+				foreach (var key in dict.Keys) {
+					if (first) first = false; else builder.AppendSeperator();
+					JsonMapper.EncodeNameValue(key.ToString(), dict[key], builder);
+				}
+				builder.AppendEndObject();
+			});
+
 			// register IEnumerable support for all list and array types
 			RegisterEncoder<IEnumerable>((obj, builder) => {
+				Console.WriteLine("using IEnumerable encoder");
 				builder.AppendBeginArray();
 				bool first = true;
 				foreach (var item in (IEnumerable)obj) {
@@ -114,7 +129,7 @@ namespace Tiny {
 							return instance;
 						}
 					} 
-					if (jsonObj is Dictionary<string, object>) {									// Dictionary
+					if (jsonObj is Dictionary<string, object>) {			// Dictionary
 						Dictionary<string, object> jsonDict = (Dictionary<string, object>)jsonObj;
 						if (type.GetGenericArguments().Length == 2) {
 							IDictionary instance = null;
@@ -130,13 +145,42 @@ namespace Tiny {
 							foreach (KeyValuePair<string, object> item in jsonDict) {
 								Console.WriteLine(item.Key + " = " + JsonMapper.DecodeValue(item.Value, genericType));
 								object value = JsonMapper.DecodeValue(item.Value, genericType);
-								if (value != null || nullable) instance.Add(item.Key, value);
+								object key = item.Key;
+								if (keyType == typeof(int)) key = Int32.Parse(item.Key);
+								if (value != null || nullable) instance.Add(key, value);
 							}
 							return instance;
 						} else {
 							Console.WriteLine("unexpected type arguemtns");
 						}
-					} 
+					}
+					if (jsonObj is Dictionary<int, object>) {			// Dictionary
+						// convert int to string key
+						Dictionary<string, object> jsonDict = new Dictionary<string, object>(); 
+						foreach (KeyValuePair<int, object> keyValuePair in (Dictionary<int, object>)jsonObj) {
+							jsonDict.Add(keyValuePair.Key.ToString(), keyValuePair.Value);
+						}
+						if (type.GetGenericArguments().Length == 2) {
+							IDictionary instance = null;
+							Type keyType = type.GetGenericArguments()[0];
+							Type genericType = type.GetGenericArguments()[1];
+							bool nullable = genericType.IsNullable();
+							if (type != typeof(IDictionary) && typeof(IDictionary).IsAssignableFrom(type)) {
+								instance = Activator.CreateInstance(type, true) as IDictionary;
+							} else {
+								Type genericDictType = typeof(Dictionary<,>).MakeGenericType(keyType, genericType);
+								instance = Activator.CreateInstance(genericDictType) as IDictionary;
+							}
+							foreach (KeyValuePair<string, object> item in jsonDict) {
+								Console.WriteLine(item.Key + " = " + JsonMapper.DecodeValue(item.Value, genericType));
+								object value = JsonMapper.DecodeValue(item.Value, genericType);
+								if (value != null || nullable) instance.Add(Convert.ToInt32(item.Key), value);
+							}
+							return instance;
+						} else {
+							Console.WriteLine("unexpected type arguemtns");
+						}
+					}
 				}
 				Console.WriteLine("couldn't decode: " + type);
 				return null;
@@ -151,7 +195,6 @@ namespace Tiny {
 				}
 			});
 		}
-
 
 		public static void RegisterDecoder<T>(Decoder decoder) {
 			if (typeof(T) == typeof(object)) {
