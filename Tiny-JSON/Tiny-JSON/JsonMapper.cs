@@ -66,9 +66,7 @@ namespace Tiny {
 			});
 
 			// register enum support
-			RegisterEncoder<Enum>((obj, builder) => {
-				builder.AppendNumber((int)obj);
-			});
+			RegisterEncoder<Enum>((obj, builder) => builder.AppendNumber(obj));
 
 			// register zulu date support
 			RegisterEncoder<DateTime>((obj, builder) => {
@@ -99,7 +97,7 @@ namespace Tiny {
 			});
 
 			// register IList support 
-			RegisterDecoder<System.Collections.IEnumerable>((type, jsonObj) => {
+			RegisterDecoder<IEnumerable>((type, jsonObj) => {
 				if (typeof(IEnumerable).IsAssignableFrom(type)) {
 					if (jsonObj is IList) {
 						IList jsonList = (IList)jsonObj;
