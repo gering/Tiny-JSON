@@ -18,12 +18,12 @@ namespace Tiny {
 
 		class Bear : Animal {
 			public bool hungry {get; set; }
-			private float weight;
+			float weight;
 			[NonSerialized]
 			public string id = "unknown";
 			public string name = "Baloo";
 
-			private Bear() {}
+			Bear() {}
 
 			public Bear(float weight) {
 				this.weight = weight;
@@ -37,8 +37,8 @@ namespace Tiny {
 		}
 
 		class Transporter<T> {
-			private Mission mission;
-			public T[] cargo = null;
+			Mission mission;
+			public T[] cargo;
 			public int? maxCargo;
 			public List<string> driver { get; private set; }
 
@@ -67,7 +67,7 @@ namespace Tiny {
 			a.legs = 4;
 
 			string json = Json.Encode(a);
-			Assert.AreEqual("{\"weight\":10.5,\"name\":\"Baloo\",\"hungry\":false,\"legs\":4,\"kind\":3}", json);
+			Assert.AreEqual("{\"hungry\":false,\"weight\":10.5,\"name\":\"Baloo\",\"legs\":4,\"kind\":3}", json);
 		}
 
 		[Test]
@@ -94,7 +94,7 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeListTest1() {
-			string[] list = new string[]{"a", "b", null, null, "e"};
+			string[] list = {"a", "b", null, null, "e"};
 			string json = Json.Encode(list);
 
 			Assert.AreEqual("[\"a\",\"b\",null,null,\"e\"]", json);
@@ -110,7 +110,7 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeListTest3() {
-			bool?[] list = new bool?[]{true, false, null};
+			bool?[] list = {true, false, null};
 			string json = Json.Encode(list);
 			
 			Assert.AreEqual("[true,false,null]", json);
@@ -118,7 +118,7 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeListTest4() {
-			bool[] list = new bool[]{true, false};
+			bool[] list = {true, false};
 			string json = Json.Encode(list);
 			
 			Assert.AreEqual("[true,false]", json);
@@ -126,7 +126,7 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeDictTest1() {
-			Dictionary<string, int> dict = new Dictionary<string, int>() {
+			Dictionary<string, int> dict = new Dictionary<string, int> {
 				{"three", 3},
 				{"five", 5},
 				{"ten", 10}
@@ -139,16 +139,26 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeDictTest2() {
-			Dictionary<int, string> dict = new Dictionary<int, string>() {
+			Dictionary<int, string> dict = new Dictionary<int, string> {
 				{3, "three"},
 				{5, "five"},
 				{10, "ten"}
 			};
-
 			string json = Json.Encode(dict);
-
 			Assert.AreEqual("{\"3\":\"three\",\"5\":\"five\",\"10\":\"ten\"}", json);
 		}
+
+        [Test]
+        public static void EncodeDictTest3() {
+            Dictionary<string, object> dict = new Dictionary<string, object> {
+                {"a", 'a'},
+                {"b", 1},
+                {"c", true},
+                {"d", null}
+            };
+            string json = Json.Encode(dict);
+            Assert.AreEqual(@"{""a"":""a"",""b"":1,""c"":true,""d"":null}", json);
+        }
 
 		[Test]
 		public static void PrettyEncodeTest1() {
@@ -156,7 +166,7 @@ namespace Tiny {
 			a.legs = 4;
 			
 			string json = Json.Encode(a, true);
-			Assert.AreEqual("{\n\t\"weight\" : 10.5,\n\t\"name\" : \"Baloo\",\n\t\"hungry\" : false,\n\t\"legs\" : 4,\n\t\"kind\" : 3\n}\n", json);
+			Assert.AreEqual("{\n\t\"hungry\" : false,\n\t\"weight\" : 10.5,\n\t\"name\" : \"Baloo\",\n\t\"legs\" : 4,\n\t\"kind\" : 3\n}\n", json);
 		}
 
 		[Test]
@@ -173,18 +183,15 @@ namespace Tiny {
 			Assert.AreEqual(null, a);
 		}
 
-
 		[Test]
 		public static void DecodeTest1() {
 			Animal a = Json.Decode<Animal>("{\"legs\":4,\"a\":false}");
-
 			Assert.AreEqual(4, a.legs);
 		}
 
 		[Test]
 		public static void DecodeTest2() {
 			Animal a = Json.Decode<Animal>("{\"legs\":null}");
-			
 			Assert.AreEqual(0, a.legs);
 		}
 
@@ -199,8 +206,18 @@ namespace Tiny {
 			Assert.AreEqual("unknown", a.id);
 		}
 
+        [Test]
+        public static void DecodeTest4() {
+            Bear a = Json.Decode<Bear>("{\"legs\":4,\"hungry\":true,\"kind\":\"Mammal\",\"name\":null}");
+
+            Assert.AreEqual(4, a.legs);
+            Assert.AreEqual(true, a.hungry);
+            Assert.AreEqual(Kind.Mammal, a.kind);
+            Assert.AreEqual(null, a.name);
+        }
+
 		[Test]
-		public static void DecodeTest4() {
+		public static void DecodeTest5() {
 			Transporter<Animal> a = Json.Decode<Transporter<Animal>>("{\"mission\":{\"target\":\"secret\",\"start\":\"2020-03-31T22:00:00.000Z\"},\"cargo\":[{\"legs\":2,\"kind\":2},{\"legs\":4,\"kind\":1}],\"maxCargo\":5,\"driver\":[\"John\", \"Homer\", null]}");
 			
 			Assert.AreEqual(5, a.maxCargo);
@@ -328,6 +345,13 @@ namespace Tiny {
 			Assert.IsFalse(dict.ContainsKey("c"));
 		}
 
+        [Test]
+        public static void DecodeDictTest4() {
+            IDictionary<int, char> dict = Json.Decode<Dictionary<int, char>>("{\"1\":\"a\", \"2\":33}");
+
+            Assert.AreEqual('a', dict[1]);
+            Assert.AreEqual((char)33, dict[2]);
+        }
 	}
 }
 

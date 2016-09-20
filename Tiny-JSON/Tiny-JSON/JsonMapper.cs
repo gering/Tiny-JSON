@@ -30,9 +30,9 @@ namespace Tiny {
 				bool first = true;
 				while (type != null) {
 					foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
-						if (field.GetCustomAttributes(typeof(System.NonSerializedAttribute), true).Length == 0) {
+						if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0) {
 							if (first) first = false; else builder.AppendSeperator();
-							JsonMapper.EncodeNameValue(field.Name, field.GetValue(obj), builder);
+							EncodeNameValue(field.Name, field.GetValue(obj), builder);
 						}
 					}
 					type = type.BaseType;
@@ -48,7 +48,7 @@ namespace Tiny {
 				IDictionary dict = (IDictionary)obj;
 				foreach (var key in dict.Keys) {
 					if (first) first = false; else builder.AppendSeperator();
-					JsonMapper.EncodeNameValue(key.ToString(), dict[key], builder);
+					EncodeNameValue(key.ToString(), dict[key], builder);
 				}
 				builder.AppendEndObject();
 			});
@@ -60,18 +60,15 @@ namespace Tiny {
 				bool first = true;
 				foreach (var item in (IEnumerable)obj) {
 					if (first) first = false; else builder.AppendSeperator();
-					JsonMapper.EncodeValue(item, builder);
+					EncodeValue(item, builder);
 				}
 				builder.AppendEndArray();
 			});
 
-			// register enum support
-			RegisterEncoder<Enum>((obj, builder) => builder.AppendNumber(obj));
-
 			// register zulu date support
 			RegisterEncoder<DateTime>((obj, builder) => {
 				DateTime date = (DateTime)obj;
-				String zulu = date.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+				string zulu = date.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
 				builder.AppendString(zulu);
 			});
 		}
@@ -85,7 +82,7 @@ namespace Tiny {
 				if (jsonObj is IDictionary) {
 					foreach (DictionaryEntry item in (IDictionary)jsonObj) {
 						string name = (string)item.Key;
-						if (!JsonMapper.DecodeValue(instance, name, item.Value)) {
+						if (!DecodeValue(instance, name, item.Value)) {
 							Console.WriteLine("couldn't decode field \"" + name + "\" of " + type);
 						}
 					}
@@ -106,7 +103,7 @@ namespace Tiny {
 							bool nullable = elementType.IsNullable();
 							var array = Array.CreateInstance(elementType, jsonList.Count);
 							for (int i = 0; i < jsonList.Count; i++) {
-								object value = JsonMapper.DecodeValue(jsonList[i], elementType);
+								object value = DecodeValue(jsonList[i], elementType);
 								if (value != null || nullable) array.SetValue(value, i);
 							}
 							return array;
@@ -121,7 +118,7 @@ namespace Tiny {
 								instance = Activator.CreateInstance(genericListType) as IList;
 							}
 							foreach (var item in jsonList) {
-								object value = JsonMapper.DecodeValue(item, genericType);
+								object value = DecodeValue(item, genericType);
 								if (value != null || nullable) instance.Add(value);
 							}
 							return instance;
@@ -142,7 +139,7 @@ namespace Tiny {
 							}
 							foreach (KeyValuePair<string, object> item in jsonDict) {
 								Console.WriteLine(item.Key + " = " + JsonMapper.DecodeValue(item.Value, genericType));
-								object value = JsonMapper.DecodeValue(item.Value, genericType);
+								object value = DecodeValue(item.Value, genericType);
 								object key = item.Key;
 								if (keyType == typeof(int)) key = Int32.Parse(item.Key);
 								if (value != null || nullable) instance.Add(key, value);
@@ -170,8 +167,8 @@ namespace Tiny {
 								instance = Activator.CreateInstance(genericDictType) as IDictionary;
 							}
 							foreach (KeyValuePair<string, object> item in jsonDict) {
-								Console.WriteLine(item.Key + " = " + JsonMapper.DecodeValue(item.Value, genericType));
-								object value = JsonMapper.DecodeValue(item.Value, genericType);
+								Console.WriteLine(item.Key + " = " + DecodeValue(item.Value, genericType));
+								object value = DecodeValue(item.Value, genericType);
 								if (value != null || nullable) instance.Add(Convert.ToInt32(item.Key), value);
 							}
 							return instance;
@@ -183,22 +180,13 @@ namespace Tiny {
 				Console.WriteLine("couldn't decode: " + type);
 				return null;
 			});
-
-			// register enum support
-			RegisterDecoder<Enum>((type, jsonObj) => {
-				if (jsonObj is string) {
-					return Enum.Parse(type, (string)jsonObj);
-				} else {
-					return Enum.ToObject(type, jsonObj);
-				}
-			});
 		}
 
 		public static void RegisterDecoder<T>(Decoder decoder) {
 			if (typeof(T) == typeof(object)) {
 				genericDecoder = decoder;
 			} else {
-				JsonMapper.decoders[typeof(T)] = decoder;
+				decoders[typeof(T)] = decoder;
 			}
 		}
 
@@ -206,7 +194,7 @@ namespace Tiny {
 			if (typeof(T) == typeof(object)) {
 				genericEncoder = encoder;
 			} else {
-				JsonMapper.encoders[typeof(T)] = encoder;
+				encoders[typeof(T)] = encoder;
 			}
 		}
 
@@ -260,8 +248,8 @@ namespace Tiny {
 		}
 
 		public static string UnwrapName(string name) {
-			if (name.StartsWith("<") && name.Contains(">")) {
-				return name.Substring(name.IndexOf("<") + 1, name.IndexOf(">") - 1);
+            if (name.StartsWith("<", StringComparison.InvariantCulture) && name.Contains(">")) {
+				return name.Substring(name.IndexOf("<", StringComparison.InvariantCulture) + 1, name.IndexOf(">", StringComparison.InvariantCulture) - 1);
 			}
 			return name;
 		}
@@ -269,9 +257,15 @@ namespace Tiny {
 		static object ConvertValue(object value, Type type) {
 			if (value != null) {
 				Type safeType = Nullable.GetUnderlyingType(type) ?? type;
-				if (!type.IsEnum) {
-					return Convert.ChangeType(value, safeType);
-				}
+                if (!type.IsEnum) {
+                    return Convert.ChangeType(value, safeType);
+                } else {
+                    if (value is string) {
+                        return Enum.Parse(type, (string)value);
+                    } else {
+                        return Enum.ToObject(type, value);
+                    }
+                }
 			}
 			return value;
 		}
@@ -301,7 +295,7 @@ namespace Tiny {
 			Type type = target.GetType();
 			while (type != null) {
 				foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
-					if (field.GetCustomAttributes(typeof(System.NonSerializedAttribute), true).Length == 0) {
+					if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0) {
 						if (name == UnwrapName(field.Name)) {
 							if (value != null) {
 								Type targetType = field.FieldType;

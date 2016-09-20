@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Tiny {
 
@@ -20,7 +21,25 @@ namespace Tiny {
 			dict.Add("a", 0);
 			dict.Add("b", "Test");
 			builder.AppendDictionary(dict);
-			Assert.AreEqual("{\"a\":0,\"b\":\"Test\"}", builder.ToString());
+			string json = builder.ToString();
+            Assert.True(json.StartsWith("{", System.StringComparison.InvariantCultureIgnoreCase));
+            Assert.True(json.EndsWith("}", System.StringComparison.InvariantCultureIgnoreCase));
+			AssertHelper.Contains(@"""a"":0", json);
+			AssertHelper.Contains(@"""b"":""Test""", json);
+		}
+
+		[Test]
+		public static void AppendDict2() {
+			JsonBuilder builder = new JsonBuilder();
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+			dict.Add("a", 0);
+			dict.Add("b", true);
+			builder.AppendDictionary(dict);
+			string json = builder.ToString();
+            Assert.True(json.StartsWith("{", System.StringComparison.InvariantCultureIgnoreCase));
+            Assert.True(json.EndsWith("}", System.StringComparison.InvariantCultureIgnoreCase));
+			AssertHelper.Contains(@"""a"":0", json);
+			AssertHelper.Contains(@"""b"":true", json);
 		}
 
 		[Test]

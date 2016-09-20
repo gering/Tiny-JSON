@@ -7,32 +7,28 @@ namespace Tiny {
 
 	public class JsonBuilder {
 
-		StringBuilder builder;
-		bool pretty;
+		StringBuilder builder = new StringBuilder();
+		bool pretty = false;
 		int level;
 
-		public JsonBuilder() {
-			this.builder = new StringBuilder();
-			this.pretty = false;
-		}
+		public JsonBuilder() {}
 
 		public JsonBuilder(bool pretty) {
-			this.builder = new StringBuilder();
 			this.pretty = pretty;
 		}
 
-		private void AppendPrettyLineBreak() {
+		void AppendPrettyLineBreak() {
 			builder.Append("\n");
 			for (int i = 0; i < level; i++) {
 				builder.Append("\t");
 			}
 		}
 
-		private bool HasPrettyLineBreak() {
-			return builder.ToString().EndsWith("\t") || builder.ToString().EndsWith("\n");
+		bool HasPrettyLineBreak() {
+            return builder.ToString().EndsWith("\t", StringComparison.InvariantCulture) || builder.ToString().EndsWith("\n", StringComparison.InvariantCulture);
 		}
 
-		private void RemovePrettyLineBreak() {
+		void RemovePrettyLineBreak() {
 			while (HasPrettyLineBreak()) {
 				builder.Remove(builder.Length - 1, 1);
 			}
@@ -166,11 +162,15 @@ namespace Tiny {
 			} else if (value is bool) {
 				AppendBool((bool)value);
 			} else if (value is string) {
-				AppendString((string)value);
+                AppendString((string)value);
+            } else if (value is char) {
+                AppendString("" + value);
+            } else if (IsEnum(value)) {
+                AppendNumber((int)value);
 			} else if (IsNumber(value)) {
-				AppendNumber(value);
-			} else {
-				Console.WriteLine("type " + value.GetType() + " not supported");
+                AppendNumber(value);
+            } else {
+				Console.WriteLine("type " + value.GetType() + " not supported!");
 			}
 		}
 
@@ -180,13 +180,19 @@ namespace Tiny {
 		}
 
 		internal static bool IsNumber(object value) {
-			return value != null && value.GetType().IsNumeric();
+            return value != null && value.GetType().IsNumeric();
 		}
+
+        internal static bool IsEnum(object value) {
+            return value != null && value.GetType().IsEnum;
+        }
 
 		internal static bool IsSupported(object obj) {
 			if (obj == null) return true;
 			if (obj is bool) return true;
 			if (obj is string) return true;
+            if (obj is char) return true;
+            if (IsEnum(obj)) return true;
 			if (IsNumber(obj)) return true;
 			return false;
 		}
