@@ -44,6 +44,21 @@ namespace Tiny {
 				return false;
 			}
 		}
+
+		public static bool IsFloatingPoint(this Type type) {
+			if (type.IsEnum) return false;
+			switch (Type.GetTypeCode(type)) {
+				case TypeCode.Decimal:
+				case TypeCode.Double:
+				case TypeCode.Single:
+					return true;
+				case TypeCode.Object:
+					Type underlyingType = Nullable.GetUnderlyingType(type);
+					return underlyingType != null && underlyingType.IsFloatingPoint();
+				default:
+					return false;
+			}
+		}
 	}
 }
 

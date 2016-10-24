@@ -78,7 +78,12 @@ namespace Tiny {
 	
 		public void AppendNumber(object number) {
 			if (number != null) {
-				builder.Append(number.ToString());
+				string numberString = number.ToString();
+				if (number.GetType().IsFloatingPoint()) {
+					numberString = numberString.Replace(',', '.');
+					if (!numberString.Contains(".")) numberString += ".0";
+				} 
+				builder.Append(numberString);
 			} else {
 				AppendNull();
 			}
@@ -87,7 +92,7 @@ namespace Tiny {
 		public void AppendString(string str) {
 			if (str != null) {
 				builder.Append('\"');
-				foreach (var c in str.ToCharArray()) {
+				foreach (var c in str) {
 					switch (c) {
 					case '"':
 						builder.Append("\\\"");

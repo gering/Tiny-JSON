@@ -63,11 +63,11 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeTest2() {
-			Animal a = new Bear(10.5f);
+			Animal a = new Bear(10);
 			a.legs = 4;
 
 			string json = Json.Encode(a);
-			Assert.AreEqual("{\"hungry\":false,\"weight\":10.5,\"name\":\"Baloo\",\"legs\":4,\"kind\":3}", json);
+			Assert.AreEqual("{\"hungry\":false,\"weight\":10.0,\"name\":\"Baloo\",\"legs\":4,\"kind\":3}", json);
 		}
 
 		[Test]

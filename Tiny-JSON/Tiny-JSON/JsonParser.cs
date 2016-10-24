@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
 
 namespace Tiny {
 
@@ -115,14 +116,17 @@ namespace Tiny {
 		internal object ParseNumber() {
 			if (PeekToken() == Token.Number) {
 				string number = ReadWord();
-				if (number.IndexOf('.') == -1) {
-					long parsedInt;
-					Int64.TryParse(number, out parsedInt);
-					return parsedInt;
+				if (number.Contains(".")) {
+					Console.WriteLine("parse floating point: " + number);
+					double parsed;
+					if (Double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)) return parsed;
+				} else { 
+					Console.WriteLine("parse integer: " + number);
+					long parsed;
+					if (Int64.TryParse(number, out parsed)) return parsed;
 				}
-				double parsedDouble;
-				Double.TryParse(number, out parsedDouble);
-				return parsedDouble;
+				Console.WriteLine("unexpected number: " + number);
+				return null;
 			} else {
 				Console.WriteLine("unexpected token: " + PeekToken());
 				return null;

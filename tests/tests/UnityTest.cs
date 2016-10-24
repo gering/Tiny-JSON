@@ -62,13 +62,13 @@ namespace Tiny {
 		public static void Vector2EncodeTest1() {
 			Vector2 v = new Vector2(1f, -2.2f);
 			string json = Json.Encode(v);
-			Assert.AreEqual("{\"x\":1,\"y\":-2.2}", json);
+			Assert.AreEqual("{\"x\":1.0,\"y\":-2.2}", json);
 		}
 		
 		[Test]
 		public static void Vector2EncodeTest2() {
 			string json = Json.Encode(new Vector2[] {new Vector2(3f, 0f), new Vector2(-1f, 0f)});
-			Assert.AreEqual("[{\"x\":3,\"y\":0},{\"x\":-1,\"y\":0}]", json);
+			Assert.AreEqual("[{\"x\":3.0,\"y\":0.0},{\"x\":-1.0,\"y\":0.0}]", json);
 		}
 	}
 }
