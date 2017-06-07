@@ -24,7 +24,7 @@ namespace Tiny {
 
 			// register generic encoder
 			RegisterEncoder<object>((obj, builder) => {
-				Console.WriteLine("using generic encoder");
+				//Console.WriteLine("using generic encoder");
 				builder.AppendBeginObject();
 				Type type = obj.GetType();
 				bool first = true;
@@ -42,7 +42,7 @@ namespace Tiny {
 
 			// register IDictionary encoder
 			RegisterEncoder<IDictionary>((obj, builder) => {
-				Console.WriteLine("using IDictionary encoder");
+				//Console.WriteLine("using IDictionary encoder");
 				builder.AppendBeginObject();
 				bool first = true;
 				IDictionary dict = (IDictionary)obj;
@@ -55,7 +55,7 @@ namespace Tiny {
 
 			// register IEnumerable support for all list and array types
 			RegisterEncoder<IEnumerable>((obj, builder) => {
-				Console.WriteLine("using IEnumerable encoder");
+				//Console.WriteLine("using IEnumerable encoder");
 				builder.AppendBeginArray();
 				bool first = true;
 				foreach (var item in (IEnumerable)obj) {

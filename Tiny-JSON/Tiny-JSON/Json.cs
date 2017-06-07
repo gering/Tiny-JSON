@@ -17,6 +17,9 @@ namespace Tiny {
 			JsonMapper.EncodeValue(value, builder);
 			return builder.ToString();
 		}
+	}
+
+    public static class JsonExtensions {
 
 		public static bool IsNullable(this Type type) {
 			return Nullable.GetUnderlyingType(type) != null || !type.IsPrimitive;
@@ -25,23 +28,23 @@ namespace Tiny {
 		public static bool IsNumeric(this Type type) {
 			if (type.IsEnum) return false;
 			switch (Type.GetTypeCode(type)) {
-			case TypeCode.Byte:
-			case TypeCode.SByte:
-			case TypeCode.UInt16:
-			case TypeCode.UInt32:
-			case TypeCode.UInt64:
-			case TypeCode.Int16:
-			case TypeCode.Int32:
-			case TypeCode.Int64:
-			case TypeCode.Decimal:
-			case TypeCode.Double:
-			case TypeCode.Single:
-				return true;
-			case TypeCode.Object:
-				Type underlyingType = Nullable.GetUnderlyingType(type);
-				return underlyingType != null && underlyingType.IsNumeric();
-			default:
-				return false;
+				case TypeCode.Byte:
+				case TypeCode.SByte:
+				case TypeCode.UInt16:
+				case TypeCode.UInt32:
+				case TypeCode.UInt64:
+				case TypeCode.Int16:
+				case TypeCode.Int32:
+				case TypeCode.Int64:
+				case TypeCode.Decimal:
+				case TypeCode.Double:
+				case TypeCode.Single:
+					return true;
+				case TypeCode.Object:
+					Type underlyingType = Nullable.GetUnderlyingType(type);
+					return underlyingType != null && underlyingType.IsNumeric();
+				default:
+					return false;
 			}
 		}
 
@@ -58,6 +61,10 @@ namespace Tiny {
 				default:
 					return false;
 			}
+		}
+
+		public static void Clear(this System.Text.StringBuilder sb) {
+			sb.Length = 0;
 		}
 	}
 }

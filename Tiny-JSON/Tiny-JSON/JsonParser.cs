@@ -8,16 +8,16 @@ namespace Tiny {
 
 	public class JsonParser : IDisposable {
 
-		const string WHITE_SPACE = " \t\n\r";
-		const string WORD_BREAK = " \t\n\r{}[],:\"";
-
 		enum Token { None, CurlyOpen, CurlyClose, SquareOpen, SquareClose, Colon, Comma, String, Number, BoolOrNull };
 
 		StringReader json;
-		
+
+		// temporary allocated
+		StringBuilder sb = new StringBuilder();
+
 		public static object ParseValue(string jsonString) {
-			using (var instance = new JsonParser(jsonString)) {
-				return instance.ParseValue();
+			using (var parser = new JsonParser(jsonString)) {
+				return parser.ParseValue();
 			}
 		}
 
@@ -36,6 +36,16 @@ namespace Tiny {
 			return json.Peek() == -1;
 		}
 
+		bool PeekWordbreak() {
+			char c = PeekChar();
+			return c == ' ' || c == ',' || c == ':' || c == '\"' || c == '{' || c == '}' || c == '[' || c == ']' || c == '\t' || c == '\n' || c == '\r';
+		}
+
+		bool PeekWhitespace() {
+			char c = PeekChar();
+			return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+		}
+
 		char PeekChar() {
 			return Convert.ToChar(json.Peek());
 		}
@@ -43,18 +53,17 @@ namespace Tiny {
 		char ReadChar() {
 			return Convert.ToChar(json.Read());
 		}
-		
+
 		string ReadWord() {
-			StringBuilder word = new StringBuilder();
-			while (WORD_BREAK.IndexOf(PeekChar()) == -1) {
-				word.Append(ReadChar());
-				if (EndReached()) return null;
+			sb.Clear();
+			while (!PeekWordbreak() && !EndReached()) {
+				sb.Append(ReadChar());
 			}
-			return word.ToString();
+			return EndReached() ? null : sb.ToString();
 		}
 
 		void EatWhitespace() {
-			while (!EndReached() && WHITE_SPACE.IndexOf(PeekChar()) != -1) {
+			while (PeekWhitespace()) {
 				json.Read();
 			}
 		}
@@ -93,58 +102,60 @@ namespace Tiny {
 				case 'f':
 				case 'n':
 					return Token.BoolOrNull;
+				default:
+					return Token.None;
 			}
-			return Token.None;
 		}
 	
 		//** Parsing Parts **//
 
-		internal object ParseBoolOrNull() {
+		object ParseBoolOrNull() {
 			if (PeekToken() == Token.BoolOrNull) {
-				string value = ReadWord();
-				if (value == "true") return true;
-				if (value == "false") return false;
-				if (value == "null") return null;
-				Console.WriteLine("unexpected value: " + value);
+				string boolValue = ReadWord();
+				if (boolValue == "true") return true;
+				if (boolValue == "false") return false;
+				if (boolValue == "null") return null;
+				Console.WriteLine("unexpected bool value: " + boolValue);
 				return null;
 			} else {
-				Console.WriteLine("unexpected token: " + PeekToken());
+				Console.WriteLine("unexpected bool token: " + PeekToken());
 				return null;
 			}
 		}
 
-		internal object ParseNumber() {
+		object ParseNumber() {
 			if (PeekToken() == Token.Number) {
 				string number = ReadWord();
 				if (number.Contains(".")) {
-					Console.WriteLine("parse floating point: " + number);
+					//Console.WriteLine("parse floating point: " + number);
 					double parsed;
 					if (Double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)) return parsed;
 				} else { 
-					Console.WriteLine("parse integer: " + number);
+					//Console.WriteLine("parse integer: " + number);
 					long parsed;
 					if (Int64.TryParse(number, out parsed)) return parsed;
 				}
-				Console.WriteLine("unexpected number: " + number);
+				Console.WriteLine("unexpected number value: " + number);
 				return null;
 			} else {
-				Console.WriteLine("unexpected token: " + PeekToken());
+				Console.WriteLine("unexpected number token: " + PeekToken());
 				return null;
 			}
 		}
 
-		internal string ParseString() {
+		string ParseString() {
 			if (PeekToken() == Token.String) {
 				ReadChar(); // ditch opening quote
 
-				StringBuilder s = new StringBuilder();
+				sb.Clear();
+				char c;
 				while (true) {
 					if (EndReached()) return null;
 					
-					char c = ReadChar();
+					c = ReadChar();
 					switch (c) {
 						case '"':
-							return s.ToString();
+							return sb.ToString();
 						case '\\':
 							if (EndReached()) return null;
 							
@@ -153,46 +164,43 @@ namespace Tiny {
 								case '"':
 								case '\\':
 								case '/':
-									s.Append(c);
+									sb.Append(c);
 									break;
 								case 'b':
-									s.Append('\b');
+									sb.Append('\b');
 									break;
 								case 'f':
-									s.Append('\f');
+									sb.Append('\f');
 									break;
 								case 'n':
-									s.Append('\n');
+									sb.Append('\n');
 									break;
 								case 'r':
-									s.Append('\r');
+									sb.Append('\r');
 									break;
 								case 't':
-									s.Append('\t');
+									sb.Append('\t');
 									break;
 								case 'u':
-									var hex = new StringBuilder();
-									for (int i = 0; i < 4; i++) {
-										hex.Append(ReadChar());
-									}
-									s.Append((char) Convert.ToInt32(hex.ToString(), 16));
+									var hex = String.Concat(ReadChar(), ReadChar(), ReadChar(), ReadChar());
+									sb.Append((char) Convert.ToInt32(hex, 16));
 									break;
 							}
 							break;
 						default:
-							s.Append(c);
+							sb.Append(c);
 							break;
 					}
 				}
 			} else {
-				Console.WriteLine("unexpected token: " + PeekToken());
+				Console.WriteLine("unexpected string token: " + PeekToken());
 				return null;
 			}
 		}
 
 		//** Parsing Objects **//
 
-		internal Dictionary<string, object> ParseObject() {
+		Dictionary<string, object> ParseObject() {
 			if (PeekToken() == Token.CurlyOpen) {
 				json.Read(); // ditch opening brace
 
@@ -219,12 +227,12 @@ namespace Tiny {
 					}
 				}
 			} else {
-				Console.WriteLine("unexpected token: " + PeekToken());
+				Console.WriteLine("unexpected object token: " + PeekToken());
 				return null;
 			}
 		}
 		
-		internal List<object> ParseArray() {
+		List<object> ParseArray() {
 			if (PeekToken() == Token.SquareOpen) {
 				json.Read(); // ditch opening brace
 
@@ -245,12 +253,12 @@ namespace Tiny {
 					}
 				}
 			} else {
-				Console.WriteLine("unexpected token: " + PeekToken());
+				Console.WriteLine("unexpected array token: " + PeekToken());
 				return null;
 			}
 		}
 
-		internal object ParseValue() {
+		object ParseValue() {
 			switch (PeekToken()) {
 			case Token.String:		
 				return ParseString();
@@ -263,7 +271,7 @@ namespace Tiny {
 			case Token.SquareOpen:	
 				return ParseArray();
 			}
-			Console.WriteLine("unexpected token: " + PeekToken());
+			Console.WriteLine("unexpected value token: " + PeekToken());
 			return null;
 		}
 	}
