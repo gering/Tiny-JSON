@@ -13,3 +13,4 @@ bin/
 *.user
 *.userprefs
 *.pidb
+tests/packages

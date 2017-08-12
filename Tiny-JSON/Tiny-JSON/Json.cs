@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Tiny {
 	public static class Json {
@@ -65,6 +67,20 @@ namespace Tiny {
 
 		public static void Clear(this System.Text.StringBuilder sb) {
 			sb.Length = 0;
+		}
+
+		public static bool IsInstanceOfGenericType(this Type type, Type genericType) {
+			while (type != null) {
+				if (type.IsGenericType && type.GetGenericTypeDefinition() == genericType) return true;
+				type = type.BaseType;
+			}
+			return false;
+		}
+
+		public static bool HasGenericInterface(this Type type, Type genericInterface) {
+			if (type == null) throw new ArgumentNullException(nameof(type));
+			var interfaceTest = new Predicate<Type>(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterface);
+			return interfaceTest(type) || type.GetInterfaces().Any(i => interfaceTest(i));
 		}
 	}
 }

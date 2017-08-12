@@ -179,25 +179,25 @@ namespace Tiny {
 
 		[Test]
 		public static void DecodeTest0() {
-			Animal a = Json.Decode<Animal>("");
+			var a = Json.Decode<Animal>("");
 			Assert.AreEqual(null, a);
 		}
 
 		[Test]
 		public static void DecodeTest1() {
-			Animal a = Json.Decode<Animal>("{\"legs\":4,\"a\":false}");
+			var a = Json.Decode<Animal>("{\"legs\":4,\"a\":false}");
 			Assert.AreEqual(4, a.legs);
 		}
 
 		[Test]
 		public static void DecodeTest2() {
-			Animal a = Json.Decode<Animal>("{\"legs\":null}");
+			var a = Json.Decode<Animal>("{\"legs\":null}");
 			Assert.AreEqual(0, a.legs);
 		}
 
 		[Test]
 		public static void DecodeTest3() {
-			Bear a = Json.Decode<Bear>("{\"legs\":4,\"hungry\":true,\"kind\":3,\"name\":null,\"id\":\"a\"}");
+			var a = Json.Decode<Bear>("{\"legs\":4,\"hungry\":true,\"kind\":3,\"name\":null,\"id\":\"a\"}");
 			
 			Assert.AreEqual(4, a.legs);
 			Assert.AreEqual(true, a.hungry);
@@ -208,7 +208,7 @@ namespace Tiny {
 
         [Test]
         public static void DecodeTest4() {
-            Bear a = Json.Decode<Bear>("{\"legs\":4,\"hungry\":true,\"kind\":\"Mammal\",\"name\":null}");
+            var a = Json.Decode<Bear>("{\"legs\":4,\"hungry\":true,\"kind\":\"Mammal\",\"name\":null}");
 
             Assert.AreEqual(4, a.legs);
             Assert.AreEqual(true, a.hungry);
@@ -218,7 +218,7 @@ namespace Tiny {
 
 		[Test]
 		public static void DecodeTest5() {
-			Transporter<Animal> a = Json.Decode<Transporter<Animal>>("{\"mission\":{\"target\":\"secret\",\"start\":\"2020-03-31T22:00:00.000Z\"},\"cargo\":[{\"legs\":2,\"kind\":2},{\"legs\":4,\"kind\":1}],\"maxCargo\":5,\"driver\":[\"John\", \"Homer\", null]}");
+			var a = Json.Decode<Transporter<Animal>>("{\"mission\":{\"target\":\"secret\",\"start\":\"2020-03-31T22:00:00.000Z\"},\"cargo\":[{\"legs\":2,\"kind\":2},{\"legs\":4,\"kind\":1}],\"maxCargo\":5,\"driver\":[\"John\", \"Homer\", null]}");
 			
 			Assert.AreEqual(5, a.maxCargo);
 			Assert.AreEqual("secret", a.Mission.target);
@@ -232,91 +232,111 @@ namespace Tiny {
 
 		[Test]
 		public static void DecodeListTest1() {
-			IList<Animal> a = Json.Decode<IList<Animal>>("[{\"legs\":4}, {\"legs\":3}]");
+			var list = Json.Decode<IList<Animal>>("[{\"legs\":4}, {\"legs\":3}]");
 			
-			Assert.AreEqual(4, a[0].legs);
-			Assert.AreEqual(3, a[1].legs);
+			Assert.AreEqual(4, list[0].legs);
+			Assert.AreEqual(3, list[1].legs);
 		}
 
 		[Test]
 		public static void DecodeListTest2() {
-			Animal[] a = Json.Decode<Animal[]>("[{\"legs\":4}, {\"legs\":3}]");
+			var array = Json.Decode<Animal[]>("[{\"legs\":4}, {\"legs\":3}]");
 			
-			Assert.AreEqual(4, a[0].legs);
-			Assert.AreEqual(3, a[1].legs);
+			Assert.AreEqual(4, array[0].legs);
+			Assert.AreEqual(3, array[1].legs);
 		}
 
 		[Test]
 		public static void DecodeListTest3() {
-			bool?[] a = Json.Decode<bool?[]>("[true,false,null,true]");
+			var array = Json.Decode<bool?[]>("[true,false,null,true]");
 			
-			Assert.AreEqual(true, a[0]);
-			Assert.AreEqual(false, a[1]);
-			Assert.AreEqual(null, a[2]);
-			Assert.AreEqual(true, a[3]);
+			Assert.AreEqual(true, array[0]);
+			Assert.AreEqual(false, array[1]);
+			Assert.AreEqual(null, array[2]);
+			Assert.AreEqual(true, array[3]);
 		}
 
 		[Test]
 		public static void DecodeListTest4() {
-			Boolean?[] a = Json.Decode<Boolean?[]>(" [ true , false , null , true ] ");
+			var array = Json.Decode<Boolean?[]>(" [ true , false , null , true ] ");
 			
-			Assert.AreEqual(true, a[0]);
-			Assert.AreEqual(false, a[1]);
-			Assert.AreEqual(null, a[2]);
-			Assert.AreEqual(true, a[3]);
+			Assert.AreEqual(true, array[0]);
+			Assert.AreEqual(false, array[1]);
+			Assert.AreEqual(null, array[2]);
+			Assert.AreEqual(true, array[3]);
 		}
 
 		[Test]
 		public static void DecodeListTest5() {
-			object[] a = Json.Decode<object[]>("[true,false,null,true]");
+			var array = Json.Decode<object[]>("[true,false,null,true]");
 			
-			Assert.AreEqual(true, a[0]);
-			Assert.AreEqual(false, a[1]);
-			Assert.AreEqual(null, a[2]);
-			Assert.AreEqual(true, a[3]);
+			Assert.AreEqual(true, array[0]);
+			Assert.AreEqual(false, array[1]);
+			Assert.AreEqual(null, array[2]);
+			Assert.AreEqual(true, array[3]);
 		}
 
 		[Test]
 		public static void DecodeListTest6() {
-			List<Boolean?> a = Json.Decode<List<Boolean?>>("[true, false, null, true]");
+			var list = Json.Decode<List<Boolean?>>("[true, false, null, true]");
 			
-			Assert.AreEqual(true, a[0]);
-			Assert.AreEqual(false, a[1]);
-			Assert.AreEqual(null, a[2]);
-			Assert.AreEqual(true, a[3]);
+			Assert.AreEqual(true, list[0]);
+			Assert.AreEqual(false, list[1]);
+			Assert.AreEqual(null, list[2]);
+			Assert.AreEqual(true, list[3]);
 		}
 
 		[Test]
 		public static void DecodeListTest7() {
-			List<float?> a = Json.Decode<List<float?>>("[1.1, 2.2, -3.3, 0, -0, null]");
+			var array = Json.Decode<List<float?>>("[1.1, 2.2, -3.3, 0, -0, null]");
 			
-			Assert.AreEqual(1.1f, a[0]);
-			Assert.AreEqual(2.2f, a[1]);
-			Assert.AreEqual(-3.3f, a[2]);
-			Assert.AreEqual(0f, a[3]);
-			Assert.AreEqual(0f, a[4]);
-			Assert.AreEqual(null, a[5]);
+			Assert.AreEqual(1.1f, array[0]);
+			Assert.AreEqual(2.2f, array[1]);
+			Assert.AreEqual(-3.3f, array[2]);
+			Assert.AreEqual(0f, array[3]);
+			Assert.AreEqual(0f, array[4]);
+			Assert.AreEqual(null, array[5]);
 		}
 
 		[Test]
 		public static void DecodeListTest8() {
-			List<string> a = Json.Decode<List<string>>("[null, null, \"a\", \"b\", null]");
+			var array = Json.Decode<List<string>>("[null, null, \"a\", \"b\", null]");
 			
-			Assert.AreEqual(null, a[0]);
-			Assert.AreEqual(null, a[1]);
-			Assert.AreEqual("a", a[2]);
-			Assert.AreEqual("b", a[3]);
-			Assert.AreEqual(null, a[4]);
+			Assert.AreEqual(null, array[0]);
+			Assert.AreEqual(null, array[1]);
+			Assert.AreEqual("a", array[2]);
+			Assert.AreEqual("b", array[3]);
+			Assert.AreEqual(null, array[4]);
 		}
 
 		[Test]
 		public static void DecodeListTest9() {
-			bool[] a = Json.Decode<bool[]>("[true, false, null, true]");
+			var array = Json.Decode<bool[]>("[true, false, null, true]");
 			
-			Assert.AreEqual(true, a[0]);
-			Assert.AreEqual(false, a[1]);
-			Assert.AreEqual(false, a[2]);	// the null value defaults to false
-			Assert.AreEqual(true, a[3]);
+			Assert.AreEqual(true, array[0]);
+			Assert.AreEqual(false, array[1]);
+			Assert.AreEqual(false, array[2]);	// the null value defaults to false
+			Assert.AreEqual(true, array[3]);
+		}
+
+		[Test]
+		public static void DecodeSetTest1() {
+			var hashSet = Json.Decode<HashSet<int>>("[1, 2, 3, 4]");
+
+			Assert.IsTrue(hashSet.Contains(1));
+			Assert.IsTrue(hashSet.Contains(2));
+			Assert.IsTrue(hashSet.Contains(3));
+			Assert.IsTrue(hashSet.Contains(4));
+		}
+
+		[Test]
+		public static void DecodeSetTest2() {
+			var hashSet = Json.Decode<HashSet<int>>("[1, 1, 3, 4]");
+
+			Assert.IsTrue(hashSet.Contains(1));
+			Assert.IsFalse(hashSet.Contains(2));
+			Assert.IsTrue(hashSet.Contains(3));
+			Assert.IsTrue(hashSet.Contains(4));
 		}
 
 		[Test]

@@ -98,7 +98,7 @@ namespace Tiny {
 				if (typeof(IEnumerable).IsAssignableFrom(type)) {
 					if (jsonObj is IList) {
 						IList jsonList = (IList)jsonObj;
-						if (type.IsArray) {															// Arrays
+						if (type.IsArray) {                                                         // Arrays
 							Type elementType = type.GetElementType();
 							bool nullable = elementType.IsNullable();
 							var array = Array.CreateInstance(elementType, jsonList.Count);
@@ -107,24 +107,40 @@ namespace Tiny {
 								if (value != null || nullable) array.SetValue(value, i);
 							}
 							return array;
-						} else if (type.GetGenericArguments().Length == 1) {						// IList
-							IList instance = null;
+						} else if (type.GetGenericArguments().Length == 1) {                        // Generic List
 							Type genericType = type.GetGenericArguments()[0];
-							bool nullable = genericType.IsNullable();
-							if (type != typeof(IList) && typeof(IList).IsAssignableFrom(type)) {
-								instance = Activator.CreateInstance(type, true) as IList;
-							} else {
-								Type genericListType = typeof(List<>).MakeGenericType(genericType);
-								instance = Activator.CreateInstance(genericListType) as IList;
-							}
-							foreach (var item in jsonList) {
-								object value = DecodeValue(item, genericType);
-								if (value != null || nullable) instance.Add(value);
-							}
-							return instance;
+							if (type.HasGenericInterface(typeof(IList<>))) {                        // IList
+								IList instance = null;
+								bool nullable = genericType.IsNullable();
+								if (type != typeof(IList) && typeof(IList).IsAssignableFrom(type)) {
+									instance = Activator.CreateInstance(type, true) as IList;
+								} else {
+									Type genericListType = typeof(List<>).MakeGenericType(genericType);
+									instance = Activator.CreateInstance(genericListType) as IList;
+								}
+								foreach (var item in jsonList) {
+									object value = DecodeValue(item, genericType);
+									if (value != null || nullable) instance.Add(value);
+								}
+								return instance;
+							} else if (type.HasGenericInterface(typeof(ICollection<>))) {			// ICollection
+								var listType = type.IsInstanceOfGenericType(typeof(HashSet<>)) ? typeof(HashSet<>) : typeof(List<>);
+								var constructedListType = listType.MakeGenericType(genericType);
+								var instance = Activator.CreateInstance(constructedListType, true);
+								bool nullable = genericType.IsNullable();
+								MethodInfo addMethodInfo = type.GetMethod("Add");
+								if (addMethodInfo != null) {
+									foreach (var item in jsonList) {
+										object value = DecodeValue(item, genericType);
+										if (value != null || nullable) addMethodInfo.Invoke(instance, new object[] { value });
+									}
+									return instance;
+								} 
+							} 
+							Console.WriteLine("IEnumerable type not supported " + type);
 						}
-					} 
-					if (jsonObj is Dictionary<string, object>) {			// Dictionary
+					}
+					if (jsonObj is Dictionary<string, object>) {            // Dictionary
 						Dictionary<string, object> jsonDict = (Dictionary<string, object>)jsonObj;
 						if (type.GetGenericArguments().Length == 2) {
 							IDictionary instance = null;
@@ -149,9 +165,9 @@ namespace Tiny {
 							Console.WriteLine("unexpected type arguemtns");
 						}
 					}
-					if (jsonObj is Dictionary<int, object>) {			// Dictionary
+					if (jsonObj is Dictionary<int, object>) {           // Dictionary
 						// convert int to string key
-						Dictionary<string, object> jsonDict = new Dictionary<string, object>(); 
+						Dictionary<string, object> jsonDict = new Dictionary<string, object>();
 						foreach (KeyValuePair<int, object> keyValuePair in (Dictionary<int, object>)jsonObj) {
 							jsonDict.Add(keyValuePair.Key.ToString(), keyValuePair.Value);
 						}
