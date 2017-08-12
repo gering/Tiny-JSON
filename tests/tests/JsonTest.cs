@@ -125,6 +125,14 @@ namespace Tiny {
 		}
 
 		[Test]
+		public static void EncodeSetTest1() {
+			HashSet<int> hashSet = new HashSet<int> { 1, 2, 3, 4 };
+			string json = Json.Encode(hashSet);
+
+			Assert.AreEqual("[1,2,3,4]", json);
+		}
+
+		[Test]
 		public static void EncodeDictTest1() {
 			Dictionary<string, int> dict = new Dictionary<string, int> {
 				{"three", 3},
