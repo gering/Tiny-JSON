@@ -1,7 +1,5 @@
 namespace Tiny {
 	public static class Json {
-		public const string Version = "1.1.1";
-
 		public static T Decode<T>(this string json) {
 			if (string.IsNullOrEmpty(json)) return default(T);
 			object jsonObj = JsonParser.ParseValue(json);
