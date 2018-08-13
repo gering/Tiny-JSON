@@ -12,7 +12,7 @@ namespace Tiny {
 
 		StringReader json;
 
-		// temporary allocated
+		// Temporary allocated
 		StringBuilder sb = new StringBuilder();
 
 		public static object ParseValue(string jsonString) {
@@ -115,10 +115,10 @@ namespace Tiny {
 				if (boolValue == "true") return true;
 				if (boolValue == "false") return false;
 				if (boolValue == "null") return null;
-				Console.WriteLine("unexpected bool value: " + boolValue);
+				Console.WriteLine("Unexpected bool value: " + boolValue);
 				return null;
 			} else {
-				Console.WriteLine("unexpected bool token: " + PeekToken());
+				Console.WriteLine("Unexpected bool token: " + PeekToken());
 				return null;
 			}
 		}
@@ -127,18 +127,16 @@ namespace Tiny {
 			if (PeekToken() == Token.Number) {
 				string number = ReadWord();
 				if (number.Contains(".")) {
-					//Console.WriteLine("parse floating point: " + number);
 					double parsed;
 					if (Double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)) return parsed;
 				} else { 
-					//Console.WriteLine("parse integer: " + number);
 					long parsed;
 					if (Int64.TryParse(number, out parsed)) return parsed;
 				}
-				Console.WriteLine("unexpected number value: " + number);
+				Console.WriteLine("Unexpected number value: " + number);
 				return null;
 			} else {
-				Console.WriteLine("unexpected number token: " + PeekToken());
+				Console.WriteLine("Unexpected number token: " + PeekToken());
 				return null;
 			}
 		}
@@ -193,7 +191,7 @@ namespace Tiny {
 					}
 				}
 			} else {
-				Console.WriteLine("unexpected string token: " + PeekToken());
+				Console.WriteLine("Unexpected string token: " + PeekToken());
 				return null;
 			}
 		}
@@ -227,7 +225,7 @@ namespace Tiny {
 					}
 				}
 			} else {
-				Console.WriteLine("unexpected object token: " + PeekToken());
+				Console.WriteLine("Unexpected object token: " + PeekToken());
 				return null;
 			}
 		}
@@ -253,7 +251,7 @@ namespace Tiny {
 					}
 				}
 			} else {
-				Console.WriteLine("unexpected array token: " + PeekToken());
+				Console.WriteLine("Unexpected array token: " + PeekToken());
 				return null;
 			}
 		}
@@ -271,7 +269,7 @@ namespace Tiny {
 			case Token.SquareOpen:	
 				return ParseArray();
 			}
-			Console.WriteLine("unexpected value token: " + PeekToken());
+			Console.WriteLine("Unexpected value token: " + PeekToken());
 			return null;
 		}
 	}

@@ -172,7 +172,7 @@ namespace Tiny {
 			} else if (IsNumber(value)) {
                 AppendNumber(value);
             } else {
-				Console.WriteLine("type " + value.GetType() + " not supported!");
+				Console.WriteLine("Type " + value.GetType() + " not supported!");
 			}
 		}
 

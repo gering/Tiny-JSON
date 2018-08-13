@@ -16,11 +16,11 @@ namespace Tiny {
 					foreach (DictionaryEntry item in (IDictionary)jsonObj) {
 						string name = (string)item.Key;
 						if (!JsonMapper.DecodeValue(instance, name, item.Value)) {
-							Console.WriteLine("couldn't decode field \"" + name + "\" of " + type);
+							Console.WriteLine("Couldn't decode field \"" + name + "\" of " + type);
 						}
 					}
 				} else {
-					Console.WriteLine("unsupported json type: " + (jsonObj != null ? jsonObj.GetType().ToString() : "null"));
+					Console.WriteLine("Unsupported json type: " + (jsonObj != null ? jsonObj.GetType().ToString() : "null"));
 				}
 				return instance;
 			};
@@ -55,7 +55,7 @@ namespace Tiny {
 						}
 						return instance;
 					} else {
-						Console.WriteLine("unexpected type arguemtns");
+						Console.WriteLine("Unexpected type arguemtns");
 					}
 				}
 				// Dictionary (convert int to string key)
@@ -82,10 +82,10 @@ namespace Tiny {
 						}
 						return instance;
 					} else {
-						Console.WriteLine("unexpected type arguemtns");
+						Console.WriteLine("Unexpected type arguemtns");
 					}
 				}
-				Console.WriteLine("couldn't decode Dictionary: " + type);
+				Console.WriteLine("Couldn't decode Dictionary: " + type);
 				return null;
 			};
 		}

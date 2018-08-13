@@ -92,7 +92,7 @@ namespace Tiny {
 				if (encoder != null) {
 					encoder(value, builder);
 				} else {
-					Console.WriteLine("encoder for " + value.GetType() + " not found");
+					Console.WriteLine("Encoder for " + value.GetType() + " not found");
 				}
 			}
 		}
@@ -141,7 +141,7 @@ namespace Tiny {
 			if (value != null && targetType.IsAssignableFrom(value.GetType())) {
 				return value;
 			} else {
-				Console.WriteLine("couldn't decode: " + targetType);
+				Console.WriteLine("Couldn't decode: " + targetType);
 				return null;
 			}
 		}
