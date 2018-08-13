@@ -126,7 +126,7 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeSetTest1() {
-			HashSet<int> hashSet = new HashSet<int> { 1, 2, 3, 4 };
+			var hashSet = new HashSet<int> { 1, 2, 3, 4 };
 			string json = Json.Encode(hashSet);
 
 			Assert.AreEqual("[1,2,3,4]", json);
@@ -134,7 +134,7 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeDictTest1() {
-			Dictionary<string, int> dict = new Dictionary<string, int> {
+			var dict = new Dictionary<string, int> {
 				{"three", 3},
 				{"five", 5},
 				{"ten", 10}
@@ -147,7 +147,7 @@ namespace Tiny {
 
 		[Test]
 		public static void EncodeDictTest2() {
-			Dictionary<int, string> dict = new Dictionary<int, string> {
+			var dict = new Dictionary<int, string> {
 				{3, "three"},
 				{5, "five"},
 				{10, "ten"}
@@ -158,7 +158,7 @@ namespace Tiny {
 
         [Test]
         public static void EncodeDictTest3() {
-            Dictionary<string, object> dict = new Dictionary<string, object> {
+            var dict = new Dictionary<string, object> {
                 {"a", 'a'},
                 {"b", 1},
                 {"c", true},
@@ -349,7 +349,7 @@ namespace Tiny {
 
 		[Test]
 		public static void DecodeDictTest1() {
-			IDictionary<int, string> dict = Json.Decode<Dictionary<int, string>>("{\"3\":\"three\", \"5\":\"five\"}");
+			var dict = Json.Decode<Dictionary<int, string>>("{\"3\":\"three\", \"5\":\"five\"}");
 			
 			Assert.AreEqual("three", dict[3]);
 			Assert.AreEqual("five", dict[5]);
@@ -357,7 +357,7 @@ namespace Tiny {
 
 		[Test]
 		public static void DecodeDictTest2() {
-			IDictionary<string, bool> dict = Json.Decode<IDictionary<string, bool>>("{\"a\":true, \"b\":false, \"c\":null}");
+			var dict = Json.Decode<IDictionary<string, bool>>("{\"a\":true, \"b\":false, \"c\":null}");
 			
 			Assert.AreEqual(true, dict["a"]);
 			Assert.AreEqual(false, dict["b"]);
@@ -366,7 +366,7 @@ namespace Tiny {
 
 		[Test]
 		public static void DecodeDictTest3() {
-			IDictionary<string, bool> dict = Json.Decode<Dictionary<string, bool>>("{\"a\":true, \"b\":false, \"c\":null}");
+			var dict = Json.Decode<Dictionary<string, bool>>("{\"a\":true, \"b\":false, \"c\":null}");
 			
 			Assert.AreEqual(true, dict["a"]);
 			Assert.AreEqual(false, dict["b"]);
@@ -375,7 +375,7 @@ namespace Tiny {
 
         [Test]
         public static void DecodeDictTest4() {
-            IDictionary<int, char> dict = Json.Decode<Dictionary<int, char>>("{\"1\":\"a\", \"2\":33}");
+            var dict = Json.Decode<Dictionary<int, char>>("{\"1\":\"a\", \"2\":33}");
 
             Assert.AreEqual('a', dict[1]);
             Assert.AreEqual((char)33, dict[2]);

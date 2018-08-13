@@ -1,12 +1,9 @@
 using System;
-using System.IO;
 using System.Text;
 using System.Collections;
 
 namespace Tiny {
-
 	public class JsonBuilder {
-
 		StringBuilder builder = new StringBuilder();
 		bool pretty = false;
 		int level;

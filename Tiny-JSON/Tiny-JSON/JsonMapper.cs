@@ -12,205 +12,38 @@ namespace Tiny {
 
 		internal static Encoder genericEncoder;
 		internal static Decoder genericDecoder;
-		internal static Dictionary<Type, Encoder> encoders = new Dictionary<Type, Encoder>();
-		internal static Dictionary<Type, Decoder> decoders = new Dictionary<Type, Decoder>();
+		internal static IDictionary<Type, Encoder> encoders = new Dictionary<Type, Encoder>();
+		internal static IDictionary<Type, Decoder> decoders = new Dictionary<Type, Decoder>();
 
 		static JsonMapper() {
-			RegisterDefaultEncoder();
-			RegisterDefaultDecoder();
+			// Register default encoder
+			RegisterEncoder(typeof(object), DefaultEncoder.GenericEncoder());
+			RegisterEncoder(typeof(IDictionary), DefaultEncoder.DictionaryEncoder());
+			RegisterEncoder(typeof(IEnumerable), DefaultEncoder.EnumerableEncoder());
+			RegisterEncoder(typeof(DateTime), DefaultEncoder.ZuluDateEncoder());
+
+			// Register default decoder
+			RegisterDecoder(typeof(object), DefaultDecoder.GenericDecoder());
+			RegisterDecoder(typeof(IDictionary), DefaultDecoder.DictionaryDecoder());
+			RegisterDecoder(typeof(Array), DefaultDecoder.ArrayDecoder());
+			RegisterDecoder(typeof(IList), DefaultDecoder.ListDecoder());
+			RegisterDecoder(typeof(ICollection), DefaultDecoder.CollectionDecoder());
+			RegisterDecoder(typeof(IEnumerable), DefaultDecoder.EnumerableDecoder());
 		}
 
-		static void RegisterDefaultEncoder() {
-
-			// register generic encoder
-			RegisterEncoder<object>((obj, builder) => {
-				//Console.WriteLine("using generic encoder");
-				builder.AppendBeginObject();
-				Type type = obj.GetType();
-				bool first = true;
-				while (type != null) {
-					foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
-						if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0) {
-							if (first) first = false; else builder.AppendSeperator();
-							EncodeNameValue(field.Name, field.GetValue(obj), builder);
-						}
-					}
-					type = type.BaseType;
-				}
-				builder.AppendEndObject();
-			});
-
-			// register IDictionary encoder
-			RegisterEncoder<IDictionary>((obj, builder) => {
-				//Console.WriteLine("using IDictionary encoder");
-				builder.AppendBeginObject();
-				bool first = true;
-				IDictionary dict = (IDictionary)obj;
-				foreach (var key in dict.Keys) {
-					if (first) first = false; else builder.AppendSeperator();
-					EncodeNameValue(key.ToString(), dict[key], builder);
-				}
-				builder.AppendEndObject();
-			});
-
-			// register IEnumerable support for all list and array types
-			RegisterEncoder<IEnumerable>((obj, builder) => {
-				//Console.WriteLine("using IEnumerable encoder");
-				builder.AppendBeginArray();
-				bool first = true;
-				foreach (var item in (IEnumerable)obj) {
-					if (first) first = false; else builder.AppendSeperator();
-					EncodeValue(item, builder);
-				}
-				builder.AppendEndArray();
-			});
-
-			// register zulu date support
-			RegisterEncoder<DateTime>((obj, builder) => {
-				DateTime date = (DateTime)obj;
-				string zulu = date.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
-				builder.AppendString(zulu);
-			});
-		}
-
-		static void RegisterDefaultDecoder() {
-
-			// register generic decoder
-			RegisterDecoder<object>((type, jsonObj) => {
-				object instance = Activator.CreateInstance(type, true);
-
-				if (jsonObj is IDictionary) {
-					foreach (DictionaryEntry item in (IDictionary)jsonObj) {
-						string name = (string)item.Key;
-						if (!DecodeValue(instance, name, item.Value)) {
-							Console.WriteLine("couldn't decode field \"" + name + "\" of " + type);
-						}
-					}
-				} else {
-					Console.WriteLine("unsupported json type: " + (jsonObj != null ? jsonObj.GetType().ToString() : "null"));
-				}
-
-				return instance;
-			});
-
-			// register IList support 
-			RegisterDecoder<IEnumerable>((type, jsonObj) => {
-				if (typeof(IEnumerable).IsAssignableFrom(type)) {
-					if (jsonObj is IList) {
-						IList jsonList = (IList)jsonObj;
-						if (type.IsArray) {                                                         // Arrays
-							Type elementType = type.GetElementType();
-							bool nullable = elementType.IsNullable();
-							var array = Array.CreateInstance(elementType, jsonList.Count);
-							for (int i = 0; i < jsonList.Count; i++) {
-								object value = DecodeValue(jsonList[i], elementType);
-								if (value != null || nullable) array.SetValue(value, i);
-							}
-							return array;
-						} else if (type.GetGenericArguments().Length == 1) {                        // Generic List
-							Type genericType = type.GetGenericArguments()[0];
-							if (type.HasGenericInterface(typeof(IList<>))) {                        // IList
-								IList instance = null;
-								bool nullable = genericType.IsNullable();
-								if (type != typeof(IList) && typeof(IList).IsAssignableFrom(type)) {
-									instance = Activator.CreateInstance(type, true) as IList;
-								} else {
-									Type genericListType = typeof(List<>).MakeGenericType(genericType);
-									instance = Activator.CreateInstance(genericListType) as IList;
-								}
-								foreach (var item in jsonList) {
-									object value = DecodeValue(item, genericType);
-									if (value != null || nullable) instance.Add(value);
-								}
-								return instance;
-							} else if (type.HasGenericInterface(typeof(ICollection<>))) {			// ICollection
-								var listType = type.IsInstanceOfGenericType(typeof(HashSet<>)) ? typeof(HashSet<>) : typeof(List<>);
-								var constructedListType = listType.MakeGenericType(genericType);
-								var instance = Activator.CreateInstance(constructedListType, true);
-								bool nullable = genericType.IsNullable();
-								MethodInfo addMethodInfo = type.GetMethod("Add");
-								if (addMethodInfo != null) {
-									foreach (var item in jsonList) {
-										object value = DecodeValue(item, genericType);
-										if (value != null || nullable) addMethodInfo.Invoke(instance, new object[] { value });
-									}
-									return instance;
-								} 
-							} 
-							Console.WriteLine("IEnumerable type not supported " + type);
-						}
-					}
-					if (jsonObj is Dictionary<string, object>) {            // Dictionary
-						Dictionary<string, object> jsonDict = (Dictionary<string, object>)jsonObj;
-						if (type.GetGenericArguments().Length == 2) {
-							IDictionary instance = null;
-							Type keyType = type.GetGenericArguments()[0];
-							Type genericType = type.GetGenericArguments()[1];
-							bool nullable = genericType.IsNullable();
-							if (type != typeof(IDictionary) && typeof(IDictionary).IsAssignableFrom(type)) {
-								instance = Activator.CreateInstance(type, true) as IDictionary;
-							} else {
-								Type genericDictType = typeof(Dictionary<,>).MakeGenericType(keyType, genericType);
-								instance = Activator.CreateInstance(genericDictType) as IDictionary;
-							}
-							foreach (KeyValuePair<string, object> item in jsonDict) {
-								Console.WriteLine(item.Key + " = " + JsonMapper.DecodeValue(item.Value, genericType));
-								object value = DecodeValue(item.Value, genericType);
-								object key = item.Key;
-								if (keyType == typeof(int)) key = Int32.Parse(item.Key);
-								if (value != null || nullable) instance.Add(key, value);
-							}
-							return instance;
-						} else {
-							Console.WriteLine("unexpected type arguemtns");
-						}
-					}
-					if (jsonObj is Dictionary<int, object>) {           // Dictionary
-						// convert int to string key
-						Dictionary<string, object> jsonDict = new Dictionary<string, object>();
-						foreach (KeyValuePair<int, object> keyValuePair in (Dictionary<int, object>)jsonObj) {
-							jsonDict.Add(keyValuePair.Key.ToString(), keyValuePair.Value);
-						}
-						if (type.GetGenericArguments().Length == 2) {
-							IDictionary instance = null;
-							Type keyType = type.GetGenericArguments()[0];
-							Type genericType = type.GetGenericArguments()[1];
-							bool nullable = genericType.IsNullable();
-							if (type != typeof(IDictionary) && typeof(IDictionary).IsAssignableFrom(type)) {
-								instance = Activator.CreateInstance(type, true) as IDictionary;
-							} else {
-								Type genericDictType = typeof(Dictionary<,>).MakeGenericType(keyType, genericType);
-								instance = Activator.CreateInstance(genericDictType) as IDictionary;
-							}
-							foreach (KeyValuePair<string, object> item in jsonDict) {
-								Console.WriteLine(item.Key + " = " + DecodeValue(item.Value, genericType));
-								object value = DecodeValue(item.Value, genericType);
-								if (value != null || nullable) instance.Add(Convert.ToInt32(item.Key), value);
-							}
-							return instance;
-						} else {
-							Console.WriteLine("unexpected type arguemtns");
-						}
-					}
-				}
-				Console.WriteLine("couldn't decode: " + type);
-				return null;
-			});
-		}
-
-		public static void RegisterDecoder<T>(Decoder decoder) {
-			if (typeof(T) == typeof(object)) {
+		public static void RegisterDecoder(Type type, Decoder decoder) {
+			if (type == typeof(object)) {
 				genericDecoder = decoder;
 			} else {
-				decoders[typeof(T)] = decoder;
+				decoders.Add(type, decoder);
 			}
 		}
 
-		public static void RegisterEncoder<T>(Encoder encoder) {
-			if (typeof(T) == typeof(object)) {
+		public static void RegisterEncoder(Type type, Encoder encoder) {
+			if (type == typeof(object)) {
 				genericEncoder = encoder;
 			} else {
-				encoders[typeof(T)] = encoder;
+				encoders.Add(type, encoder);
 			}
 		}
 
@@ -221,6 +54,9 @@ namespace Tiny {
 			foreach (var entry in decoders) {
 				Type baseType = entry.Key;
 				if (baseType.IsAssignableFrom(type)) {
+					return entry.Value;
+				}
+				if (baseType.HasGenericInterface(type)) {
 					return entry.Value;
 				}
 			}
@@ -234,6 +70,9 @@ namespace Tiny {
 			foreach (var entry in encoders) {
 				Type baseType = entry.Key;
 				if (baseType.IsAssignableFrom(type)) {
+					return entry.Value;
+				}
+				if (baseType.HasGenericInterface(type)) {
 					return entry.Value;
 				}
 			}
@@ -286,7 +125,7 @@ namespace Tiny {
 			return value;
 		}
 
-		static object DecodeValue(object value, Type targetType) {
+		public static object DecodeValue(object value, Type targetType) {
 			if (value == null) return null;
 
 			if (JsonBuilder.IsSupported(value)) {
