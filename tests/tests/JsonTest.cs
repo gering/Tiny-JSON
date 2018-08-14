@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using System;
+using UnityEngine;
 
 namespace Tiny {
 
@@ -239,19 +240,46 @@ namespace Tiny {
 		}
 
 		[Test]
+		public static void DecodeVector2Test1() {
+			var vector = Json.Decode<Vector2>("{\"x\":4, \"y\":2}");
+			Assert.AreEqual(new Vector2(4, 2), vector);
+		}
+
+		[Test]
+		public static void DecodeVector2Test2() {
+			var vector = Json.Decode<Vector2>("{\"x\":4, \"y\":2, \"z\":0}");
+			Assert.AreEqual(new Vector2(4, 2), vector);
+		}
+
+		[Test]
+		public static void DecodeQuaternionTest1() {
+			var quaternion = Json.Decode<Quaternion>("{\"x\":3, \"y\":4, \"z\":5, \"w\":1}");
+			Assert.AreEqual(new Quaternion(3, 4, 5, 1), quaternion);
+		}
+
+		[Test]
+		public static void DecodeVector3ListTest1() {
+			var vectors = Json.Decode<IList<Vector3>>("[{\"x\":4, \"y\":3, \"z\":-1}, {\"x\":1, \"y\":1, \"z\":1}, {}]");
+
+			Assert.AreEqual(new Vector3(4, 3, -1), vectors[0]);
+			Assert.AreEqual(new Vector3(1, 1, 1), vectors[1]);
+			Assert.AreEqual(new Vector3(0, 0, 0), vectors[2]);
+		}
+
+		[Test]
 		public static void DecodeListTest1() {
-			var list = Json.Decode<IList<Animal>>("[{\"legs\":4}, {\"legs\":3}]");
+			var list = Json.Decode<IList<Animal>>("[{\"legs\":4}, {\"legs\":2}]");
 			
 			Assert.AreEqual(4, list[0].legs);
-			Assert.AreEqual(3, list[1].legs);
+			Assert.AreEqual(2, list[1].legs);
 		}
 
 		[Test]
 		public static void DecodeListTest2() {
-			var array = Json.Decode<Animal[]>("[{\"legs\":4}, {\"legs\":3}]");
+			var array = Json.Decode<Animal[]>("[{\"legs\":4}, {\"legs\":2}]");
 			
 			Assert.AreEqual(4, array[0].legs);
-			Assert.AreEqual(3, array[1].legs);
+			Assert.AreEqual(2, array[1].legs);
 		}
 
 		[Test]
