@@ -17,7 +17,9 @@ namespace Tiny {
 					foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
 						if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0) {
 							if (first) first = false; else builder.AppendSeperator();
-							JsonMapper.EncodeNameValue(field.Name, field.GetValue(obj), builder);
+
+							var fieldName = field.UnwrappedFieldName(type);
+							JsonMapper.EncodeNameValue(fieldName, field.GetValue(obj), builder);
 						}
 					}
 					type = type.BaseType;

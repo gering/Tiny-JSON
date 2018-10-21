@@ -13,12 +13,15 @@ namespace Tiny {
 		}
 
 		class Animal {
-			public int legs;
-			internal Kind kind {get; set; }
+			[JsonProperty("legs")]
+			public int numberOfLegs;
+
+			internal Kind Kind {get; set; }
 		}
 
 		class Bear : Animal {
-			public bool hungry {get; set; }
+			[JsonProperty("hungry")]
+			public bool Hungry {get; set; }
 			float weight;
 			[NonSerialized]
 			public string id = "unknown";
@@ -28,7 +31,7 @@ namespace Tiny {
 
 			public Bear(float weight) {
 				this.weight = weight;
-				this.kind = Kind.Mammal;
+				this.Kind = Kind.Mammal;
 			}
 		}
 
@@ -38,59 +41,65 @@ namespace Tiny {
 		}
 
 		class Transporter<T> {
-			Mission mission;
 			public T[] cargo;
 			public int? maxCargo;
-			public List<string> driver { get; private set; }
+			public List<string> Driver { get; private set; }
 
+			[JsonProperty("mission")]
+			Mission _mission;
 			public Mission Mission {
-				get { return mission; }
-				set { mission = value; }
+				get { return _mission; }
+				set { _mission = value; }
 			}
 
 			public Transporter() {
-				driver = new List<string>();
+				Driver = new List<string>();
 			}
 		}
 
 		[Test]
 		public static void EncodeTest1() {
-			Animal a = new Animal();
-			a.legs = 4;
+			Animal a = new Animal {
+				numberOfLegs = 4
+			};
 
 			string json = Json.Encode(a);
-			Assert.AreEqual("{\"legs\":4,\"kind\":0}", json);
+			Assert.AreEqual("{\"legs\":4,\"Kind\":0}", json);
 		}
 
 		[Test]
 		public static void EncodeTest2() {
-			Animal a = new Bear(10);
-			a.legs = 4;
+			Animal a = new Bear(10) {
+				numberOfLegs = 4
+			};
 
 			string json = Json.Encode(a);
-			Assert.AreEqual("{\"hungry\":false,\"weight\":10.0,\"name\":\"Baloo\",\"legs\":4,\"kind\":3}", json);
+			Assert.AreEqual("{\"hungry\":false,\"weight\":10.0,\"name\":\"Baloo\",\"legs\":4,\"Kind\":3}", json);
 		}
 
 		[Test]
 		public static void EncodeTest3() {
-			Animal a = new Animal();
-			a.legs = 4;
+			Animal a = new Animal {
+				numberOfLegs = 4
+			};
 
-			Animal b = new Animal();
-			a.legs = 2;
+			Animal b = new Animal {
+				numberOfLegs = 2
+			};
 
 			Mission m;
 			m.target = "unknown";
 			m.start = new DateTime(2020, 4, 1);
 
-			Transporter<Animal> t = new Transporter<Animal>();
-			t.Mission = m;
-			t.cargo = new Animal[] { a, b };
-			t.driver.Add("Joe");
+			Transporter<Animal> t = new Transporter<Animal> {
+				Mission = m,
+				cargo = new Animal[] { a, b }
+			};
+			t.Driver.Add("Joe");
 
 			string json = Json.Encode(t);
 			Console.WriteLine("json = " + json);
-			Assert.AreEqual("{\"mission\":{\"target\":\"unknown\",\"start\":\"2020-03-31T22:00:00.000Z\"},\"cargo\":[{\"legs\":2,\"kind\":0},{\"legs\":0,\"kind\":0}],\"maxCargo\":null,\"driver\":[\"Joe\"]}", json);
+			Assert.AreEqual("{\"cargo\":[{\"legs\":4,\"Kind\":0},{\"legs\":2,\"Kind\":0}],\"maxCargo\":null,\"Driver\":[\"Joe\"],\"mission\":{\"target\":\"unknown\",\"start\":\"2020-03-31T22:00:00.000Z\"}}", json);
 		}
 
 		[Test]
@@ -171,11 +180,12 @@ namespace Tiny {
 
 		[Test]
 		public static void PrettyEncodeTest1() {
-			Animal a = new Bear(10.5f);
-			a.legs = 4;
-			
+			Animal a = new Bear(10.5f) {
+				numberOfLegs = 4
+			};
+
 			string json = Json.Encode(a, true);
-			Assert.AreEqual("{\n\t\"hungry\" : false,\n\t\"weight\" : 10.5,\n\t\"name\" : \"Baloo\",\n\t\"legs\" : 4,\n\t\"kind\" : 3\n}\n", json);
+			Assert.AreEqual("{\n\t\"hungry\" : false,\n\t\"weight\" : 10.5,\n\t\"name\" : \"Baloo\",\n\t\"legs\" : 4,\n\t\"Kind\" : 3\n}\n", json);
 		}
 
 		[Test]
@@ -195,22 +205,22 @@ namespace Tiny {
 		[Test]
 		public static void DecodeTest1() {
 			var a = Json.Decode<Animal>("{\"legs\":4,\"a\":false}");
-			Assert.AreEqual(4, a.legs);
+			Assert.AreEqual(4, a.numberOfLegs);
 		}
 
 		[Test]
 		public static void DecodeTest2() {
 			var a = Json.Decode<Animal>("{\"legs\":null}");
-			Assert.AreEqual(0, a.legs);
+			Assert.AreEqual(0, a.numberOfLegs);
 		}
 
 		[Test]
 		public static void DecodeTest3() {
-			var a = Json.Decode<Bear>("{\"legs\":4,\"hungry\":true,\"kind\":3,\"name\":null,\"id\":\"a\"}");
+			var a = Json.Decode<Bear>("{\"Legs\":4,\"hungry\":true,\"kind\":3,\"name\":null,\"id\":\"a\"}");
 			
-			Assert.AreEqual(4, a.legs);
-			Assert.AreEqual(true, a.hungry);
-			Assert.AreEqual(Kind.Mammal, a.kind);
+			Assert.AreEqual(4, a.numberOfLegs);
+			Assert.AreEqual(true, a.Hungry);
+			Assert.AreEqual(Kind.Mammal, a.Kind);
 			Assert.AreEqual(null, a.name);
 			Assert.AreEqual("unknown", a.id);
 		}
@@ -219,9 +229,9 @@ namespace Tiny {
         public static void DecodeTest4() {
             var a = Json.Decode<Bear>("{\"legs\":4,\"hungry\":true,\"kind\":\"Mammal\",\"name\":null}");
 
-            Assert.AreEqual(4, a.legs);
-            Assert.AreEqual(true, a.hungry);
-            Assert.AreEqual(Kind.Mammal, a.kind);
+            Assert.AreEqual(4, a.numberOfLegs);
+            Assert.AreEqual(true, a.Hungry);
+			Assert.AreEqual(Kind.Mammal, a.Kind);
             Assert.AreEqual(null, a.name);
         }
 
@@ -232,11 +242,11 @@ namespace Tiny {
 			Assert.AreEqual(5, a.maxCargo);
 			Assert.AreEqual("secret", a.Mission.target);
 			Assert.AreEqual(new DateTime(2020, 4, 1), a.Mission.start);
-			Assert.AreEqual(2, a.cargo[0].legs);
-			Assert.AreEqual(Kind.Bird, a.cargo[0].kind);
-			Assert.AreEqual(4, a.cargo[1].legs);
-			Assert.AreEqual(Kind.Reptile, a.cargo[1].kind);
-			Assert.AreEqual(new List<string>(new string[]{"John", "Homer", null}), a.driver);
+			Assert.AreEqual(2, a.cargo[0].numberOfLegs);
+			Assert.AreEqual(Kind.Bird, a.cargo[0].Kind);
+			Assert.AreEqual(4, a.cargo[1].numberOfLegs);
+			Assert.AreEqual(Kind.Reptile, a.cargo[1].Kind);
+			Assert.AreEqual(new List<string>(new string[]{"John", "Homer", null}), a.Driver);
 		}
 
 		[Test]
@@ -270,16 +280,16 @@ namespace Tiny {
 		public static void DecodeListTest1() {
 			var list = Json.Decode<IList<Animal>>("[{\"legs\":4}, {\"legs\":2}]");
 			
-			Assert.AreEqual(4, list[0].legs);
-			Assert.AreEqual(2, list[1].legs);
+			Assert.AreEqual(4, list[0].numberOfLegs);
+			Assert.AreEqual(2, list[1].numberOfLegs);
 		}
 
 		[Test]
 		public static void DecodeListTest2() {
 			var array = Json.Decode<Animal[]>("[{\"legs\":4}, {\"legs\":2}]");
 			
-			Assert.AreEqual(4, array[0].legs);
-			Assert.AreEqual(2, array[1].legs);
+			Assert.AreEqual(4, array[0].numberOfLegs);
+			Assert.AreEqual(2, array[1].numberOfLegs);
 		}
 
 		[Test]

@@ -98,15 +98,8 @@ namespace Tiny {
 		}
 
 		public static void EncodeNameValue(string name, object value, JsonBuilder builder) {
-			builder.AppendName(UnwrapName(name));
+			builder.AppendName(name);
 			EncodeValue(value, builder);
-		}
-
-		public static string UnwrapName(string name) {
-            if (name.StartsWith("<", StringComparison.InvariantCulture) && name.Contains(">")) {
-				return name.Substring(name.IndexOf("<", StringComparison.InvariantCulture) + 1, name.IndexOf(">", StringComparison.InvariantCulture) - 1);
-			}
-			return name;
 		}
 
 		static object ConvertValue(object value, Type type) {
@@ -151,7 +144,9 @@ namespace Tiny {
 			while (type != null) {
 				foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
 					if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0) {
-						if (name == UnwrapName(field.Name)) {
+						string fieldName = field.UnwrappedFieldName(type);
+
+						if (name.Equals(fieldName, StringComparison.CurrentCultureIgnoreCase)) {
 							if (value != null) {
 								Type targetType = field.FieldType;
 								object decodedValue = DecodeValue(value, targetType);

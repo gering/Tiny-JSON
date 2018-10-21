@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 
 namespace Tiny {
 	public static class TypeExtensions {
@@ -15,6 +16,42 @@ namespace Tiny {
 			if (genericInterface == null) throw new ArgumentNullException();
 			var interfaceTest = new Predicate<Type>(i => i.IsGenericType && i.GetGenericTypeDefinition().IsAssignableFrom(genericInterface));
 			return interfaceTest(type) || type.GetInterfaces().Any(i => interfaceTest(i));
+		}
+
+		static string UnwrapFieldName(string name) {
+			if (name.StartsWith("<", StringComparison.Ordinal) && name.Contains(">")) {
+				return name.Substring(name.IndexOf("<", StringComparison.Ordinal) + 1, name.IndexOf(">", StringComparison.Ordinal) - 1);
+			}
+			return name;
+		}
+
+		public static string UnwrappedFieldName(this FieldInfo field, Type type) {
+			string name = UnwrapFieldName(field.Name);
+
+			if (field.GetCustomAttributes(typeof(JsonPropertyAttribute), true).Length == 1) {
+				var jsonProperty = field.GetCustomAttributes(typeof(JsonPropertyAttribute), true)[0] as JsonPropertyAttribute;
+				name = jsonProperty.Name;
+			} else {
+				foreach (var property in type.GetProperties()) {
+					if (UnwrapFieldName(property.Name).Equals(name, StringComparison.OrdinalIgnoreCase)) {
+						name = property.UnwrappedPropertyName();
+						break;
+					}
+				}
+			}
+
+			return name;
+		}
+
+		public static string UnwrappedPropertyName(this PropertyInfo property) {
+			string name = UnwrapFieldName(property.Name);
+
+			if (property.GetCustomAttributes(typeof(JsonPropertyAttribute), true).Length == 1) {
+				var jsonProperty = property.GetCustomAttributes(typeof(JsonPropertyAttribute), true)[0] as JsonPropertyAttribute;
+				name = jsonProperty.Name;
+			}
+
+			return name;
 		}
 	}
 
