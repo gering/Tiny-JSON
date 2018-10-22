@@ -47,3 +47,22 @@ byte[] result = request.downloadHandler.data;
 string json = System.Text.Encoding.Default.GetString(result);
 return json.Decode<Session>();
 ```
+
+Or even simpler, automatically match snake case to camel case:
+
+```csharp
+[MatchSnakeCase]
+public class Session {
+	public string tokenType;
+	public string accessToken;
+	public string refreshToken;
+	[JsonProperty("expires_in")]
+	public long accessTokenExpire;
+}
+
+// ... decode with custom attributed fields
+byte[] result = request.downloadHandler.data;
+string json = System.Text.Encoding.Default.GetString(result);
+return json.Decode<Session>();
+```
+
