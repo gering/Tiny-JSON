@@ -141,12 +141,12 @@ namespace Tiny {
 
 		public static bool DecodeValue(object target, string name, object value) {
 			Type type = target.GetType();
+			bool matchSnakeCase = type.GetCustomAttributes(typeof(MatchSnakeCaseAttribute), true).Length == 1;
+
 			while (type != null) {
 				foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
 					if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0) {
-						string fieldName = field.UnwrappedFieldName(type);
-
-						if (name.Equals(fieldName, StringComparison.CurrentCultureIgnoreCase)) {
+						if (field.MatchFieldName(name, type, matchSnakeCase)) {
 							if (value != null) {
 								Type targetType = field.FieldType;
 								object decodedValue = DecodeValue(value, targetType);

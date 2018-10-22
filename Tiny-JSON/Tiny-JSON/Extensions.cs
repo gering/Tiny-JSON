@@ -1,8 +1,20 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
 namespace Tiny {
+
+	public static class StringExtensions {
+		public static string SnakeCaseToCamelCase(this string snakeCaseName) {
+			return snakeCaseName.Split(new[] { "_" }, StringSplitOptions.RemoveEmptyEntries).Select(s => char.ToUpperInvariant(s[0]) + s.Substring(1, s.Length - 1)).Aggregate(string.Empty, (s1, s2) => s1 + s2);
+		}
+
+		public static string CamelCaseToSnakeCase(this string camelCaseName) {
+			return string.Concat(camelCaseName.Select((x, i) => i > 0 && char.IsUpper(x) ? "_" + x.ToString() : x.ToString()).ToArray()).ToLower(CultureInfo.InvariantCulture);
+		}
+	}
+
 	public static class TypeExtensions {
 		public static bool IsInstanceOfGenericType(this Type type, Type genericType) {
 			while (type != null) {
@@ -25,7 +37,7 @@ namespace Tiny {
 			return name;
 		}
 
-		public static string UnwrappedFieldName(this FieldInfo field, Type type) {
+		public static string UnwrappedFieldName(this FieldInfo field, Type type, bool convertSnakeCase) {
 			string name = UnwrapFieldName(field.Name);
 
 			if (field.GetCustomAttributes(typeof(JsonPropertyAttribute), true).Length == 1) {
@@ -40,7 +52,7 @@ namespace Tiny {
 				}
 			}
 
-			return name;
+			return convertSnakeCase ? name.SnakeCaseToCamelCase() : name;
 		}
 
 		public static string UnwrappedPropertyName(this PropertyInfo property) {
@@ -52,6 +64,15 @@ namespace Tiny {
 			}
 
 			return name;
+		}
+
+		public static bool MatchFieldName(this FieldInfo field, String name, Type type, bool matchSnakeCase) {
+			string fieldName = field.UnwrappedFieldName(type, matchSnakeCase);
+			if (matchSnakeCase) {
+				name = name.SnakeCaseToCamelCase();
+			}
+
+			return name.Equals(fieldName, StringComparison.CurrentCultureIgnoreCase);
 		}
 	}
 

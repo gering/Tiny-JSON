@@ -9,4 +9,8 @@ namespace Tiny {
 			Name = name;
 		}
 	}
+
+	[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+	public class MatchSnakeCaseAttribute : Attribute {
+	}
 }

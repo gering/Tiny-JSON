@@ -12,13 +12,17 @@ namespace Tiny {
 			return (obj, builder) => {
 				builder.AppendBeginObject();
 				Type type = obj.GetType();
+				bool matchSnakeCase = type.GetCustomAttributes(typeof(MatchSnakeCaseAttribute), true).Length == 1;
 				bool first = true;
 				while (type != null) {
 					foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
 						if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0) {
 							if (first) first = false; else builder.AppendSeperator();
 
-							var fieldName = field.UnwrappedFieldName(type);
+							var fieldName = field.UnwrappedFieldName(type, false);
+							if (matchSnakeCase) {
+								fieldName = fieldName.CamelCaseToSnakeCase();
+							}
 							JsonMapper.EncodeNameValue(fieldName, field.GetValue(obj), builder);
 						}
 					}
